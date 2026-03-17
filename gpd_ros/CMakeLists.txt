@@ -136,11 +136,13 @@ add_executable(detect_grasps_server
 target_include_directories(detect_grasps PRIVATE
   include
   ${PCL_INCLUDE_DIRS}
+  ${OpenCV_INCLUDE_DIRS}
 )
 
 target_include_directories(detect_grasps_server PRIVATE
   include
   ${PCL_INCLUDE_DIRS}
+  ${OpenCV_INCLUDE_DIRS}
 )
 
 # ROS dependencies

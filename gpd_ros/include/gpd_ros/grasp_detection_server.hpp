@@ -10,16 +10,16 @@
 
 // ROS2
 #include <rclcpp/rclcpp.hpp>
-//#include <eigen_conversions/eigen_msg.h>
+// #include <eigen_conversions/eigen_msg.h>
 #include <pcl_conversions/pcl_conversions.h>
 
+#include <std_msgs/msg/header.hpp>
 #include <visualization_msgs/msg/marker.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
-#include <std_msgs/msg/header.hpp>
 
 // GPD
-#include <gpd/util/cloud.h>
 #include <gpd/grasp_detector.h>
+#include <gpd/util/cloud.h>
 
 // this project (services)
 #include <gpd_ros/srv/detect_grasps.hpp>
@@ -33,8 +33,8 @@
 #include <gpd_ros/grasp_plotter.hpp>
 
 // PCL
-#include <pcl/point_cloud.hpp>
-#include <pcl/point_types.hpp>
+#include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
 
 typedef pcl::PointCloud<pcl::PointXYZRGBA> PointCloudRGBA;
 typedef pcl::PointCloud<pcl::PointNormal> PointCloudPointNormal;
@@ -46,61 +46,58 @@ typedef pcl::PointCloud<pcl::PointNormal> PointCloudPointNormal;
 class GraspDetectionServer : public rclcpp::Node
 {
 public:
+    /**
+     * Constructor
+     */
+    GraspDetectionServer ();
 
-  /**
-   * Constructor
-   */
-  GraspDetectionServer();
+    /**
+     * Destructor
+     */
+    ~GraspDetectionServer ()
+    {
+        delete cloud_camera_;
+        delete grasp_detector_;
+        delete rviz_plotter_;
+    }
 
-  /**
-   * Destructor
-   */
-  ~GraspDetectionServer()
-  {
-    delete cloud_camera_;
-    delete grasp_detector_;
-    delete rviz_plotter_;
-  }
+    /**
+     * Service callback
+     */
+    void detectGrasps (
+        const std::shared_ptr<gpd_ros::srv::DetectGrasps::Request> req,
+        std::shared_ptr<gpd_ros::srv::DetectGrasps::Response> res);
 
 private:
+    /** ROS2 publisher for grasp list */
+    rclcpp::Publisher<gpd_ros::msg::GraspConfigList>::SharedPtr grasps_pub_;
 
-  /**
-   * Service callback
-   */
-  void detectGrasps(
-      const std::shared_ptr<gpd_ros::srv::DetectGrasps::Request> req,
-      std::shared_ptr<gpd_ros::srv::DetectGrasps::Response> res);
+    /** ROS2 service */
+    rclcpp::Service<gpd_ros::srv::DetectGrasps>::SharedPtr service_;
 
+    /** cloud header */
+    std_msgs::msg::Header cloud_camera_header_;
 
-  /** ROS2 publisher for grasp list */
-  rclcpp::Publisher<gpd_ros::msg::GraspConfigList>::SharedPtr grasps_pub_;
+    /** frame id */
+    std::string frame_;
 
-  /** ROS2 service */
-  rclcpp::Service<gpd_ros::srv::DetectGrasps>::SharedPtr service_;
+    /** GPD detector */
+    gpd::GraspDetector* grasp_detector_;
 
-  /** cloud header */
-  std_msgs::msg::Header cloud_camera_header_;
+    /** cloud storage */
+    gpd::util::Cloud* cloud_camera_;
 
-  /** frame id */
-  std::string frame_;
+    /** RViz plotter */
+    GraspPlotter* rviz_plotter_;
 
-  /** GPD detector */
-  gpd::GraspDetector* grasp_detector_;
+    /** visualization flag */
+    bool use_rviz_;
 
-  /** cloud storage */
-  gpd::util::Cloud* cloud_camera_;
+    /** workspace limits */
+    std::vector<double> workspace_;
 
-  /** RViz plotter */
-  GraspPlotter* rviz_plotter_;
-
-  /** visualization flag */
-  bool use_rviz_;
-
-  /** workspace limits */
-  std::vector<double> workspace_;
-
-  /** camera viewpoint */
-  Eigen::Vector3d view_point_;
+    /** camera viewpoint */
+    Eigen::Vector3d view_point_;
 };
 
 #endif

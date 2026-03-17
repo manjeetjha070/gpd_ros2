@@ -13,17 +13,19 @@ def generate_launch_description():
                 # 'use_importance_sampling': False,
 
                 # What type of point cloud is used and the ROS topic it comes from
-                'cloud_type': 2,  # 0: PointCloud2, 1: CloudIndexed, 2: CloudSamples
-                'cloud_topic': '/cloud_stitched',
+                'cloud_type': 0,  # 0: PointCloud2, 1: CloudIndexed, 2: CloudSamples
+                'cloud_topic': '/rgbd_camera/points',
 
                 # Optional: ROS topic that the samples come from
                 'samples_topic': '',
 
                 # Filepath to the configuration file for GPD
-                'config_file': '/home/ur5/projects/gpd/cfg/ros_vino_params.cfg',
+                'config_file': '/home/manjeet/gpd/cfg/ros_eigen_params.cfg',
 
                 # RViz topic to publish grasps
-                'rviz_topic': 'plot_grasps'
+                'rviz_topic': 'plot_grasps',
+
+                'use_sim_time': True
             }]
         )
     ])

@@ -15,13 +15,13 @@
 
 // ROS2
 #include <rclcpp/rclcpp.hpp>
-//#include <eigen_conversions/eigen_msg.h>
+// #include <eigen_conversions/eigen_msg.h>
 #include <pcl_conversions/pcl_conversions.h>
 
 #include <sensor_msgs/msg/point_cloud2.hpp>
+#include <std_msgs/msg/header.hpp>
 #include <visualization_msgs/msg/marker.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
-#include <std_msgs/msg/header.hpp>
 
 // PCL
 #include <pcl/common/common.h>
@@ -29,9 +29,9 @@
 #include <pcl/point_types.h>
 
 // GPD
-#include <gpd/util/cloud.h>
 #include <gpd/grasp_detector.h>
 #include <gpd/sequential_importance_sampling.h>
+#include <gpd/util/cloud.h>
 
 // this project (messages)
 #include <gpd_ros/msg/cloud_indexed.hpp>
@@ -57,119 +57,108 @@ typedef pcl::PointCloud<pcl::PointNormal> PointCloudPointNormal;
 class GraspDetectionNode : public rclcpp::Node
 {
 public:
+    /**
+     * Constructor
+     */
+    GraspDetectionNode ();
 
-  /**
-   * Constructor
-   */
-  GraspDetectionNode();
+    /**
+     * Destructor
+     */
+    ~GraspDetectionNode ()
+    {
+        delete cloud_camera_;
+        delete grasp_detector_;
+        delete rviz_plotter_;
+    }
 
-  /**
-   * Destructor
-   */
-  ~GraspDetectionNode()
-  {
-    delete cloud_camera_;
-    delete grasp_detector_;
-    delete rviz_plotter_;
-  }
+    /**
+     * Run node
+     */
+    void run ();
 
-  /**
-   * Run node
-   */
-  void run();
-
-  /**
-   * Detect grasp poses
-   */
-  std::vector<std::unique_ptr<gpd::candidate::Hand>> detectGraspPoses();
+    /**
+     * Detect grasp poses
+     */
+    std::vector<std::unique_ptr<gpd::candidate::Hand>> detectGraspPoses ();
 
 private:
+    /**
+     * Find indices of points within a ball
+     */
+    std::vector<int> getSamplesInBall (
+        const PointCloudRGBA::Ptr& cloud, const pcl::PointXYZRGBA& centroid, float radius);
 
-  /**
-   * Find indices of points within a ball
-   */
-  std::vector<int> getSamplesInBall(
-      const PointCloudRGBA::Ptr& cloud,
-      const pcl::PointXYZRGBA& centroid,
-      float radius);
+    /**
+     * Point cloud callback
+     */
+    void cloud_callback (const sensor_msgs::msg::PointCloud2::SharedPtr msg);
 
-  /**
-   * Point cloud callback
-   */
-  void cloud_callback(
-      const sensor_msgs::msg::PointCloud2::SharedPtr msg);
+    /**
+     * Cloud indexed callback
+     */
+    void cloud_indexed_callback (const gpd_ros::msg::CloudIndexed::SharedPtr msg);
 
-  /**
-   * Cloud indexed callback
-   */
-  void cloud_indexed_callback(
-      const gpd_ros::msg::CloudIndexed::SharedPtr msg);
+    /**
+     * Cloud samples callback
+     */
+    void cloud_samples_callback (const gpd_ros::msg::CloudSamples::SharedPtr msg);
 
-  /**
-   * Cloud samples callback
-   */
-  void cloud_samples_callback(
-      const gpd_ros::msg::CloudSamples::SharedPtr msg);
+    /**
+     * Initialize cloud camera
+     */
+    void initCloudCamera (const gpd_ros::msg::CloudSources& msg);
 
-  /**
-   * Initialize cloud camera
-   */
-  void initCloudCamera(
-      const gpd_ros::msg::CloudSources::SharedPtr msg);
+    /**
+     * Samples callback
+     */
+    void samples_callback (const gpd_ros::msg::SamplesMsg::SharedPtr msg);
 
-  /**
-   * Samples callback
-   */
-  void samples_callback(
-      const gpd_ros::msg::SamplesMsg::SharedPtr msg);
-
-  Eigen::Matrix3Xd fillMatrixFromFile(
-      const std::string& filename,
-      int num_normals);
+    Eigen::Matrix3Xd fillMatrixFromFile (const std::string& filename, int num_normals);
 
 
-  /** camera view point */
-  Eigen::Vector3d view_point_;
+    /** camera view point */
+    Eigen::Vector3d view_point_;
 
-  /** point cloud with camera info */
-  gpd::util::Cloud* cloud_camera_;
+    /** point cloud with camera info */
+    gpd::util::Cloud* cloud_camera_;
 
-  /** header of cloud */
-  std_msgs::msg::Header cloud_camera_header_;
+    /** header of cloud */
+    std_msgs::msg::Header cloud_camera_header_;
 
-  int size_left_cloud_;
+    int size_left_cloud_;
 
-  bool has_cloud_;
-  bool has_normals_;
-  bool has_samples_;
+    bool has_cloud_;
+    bool has_normals_;
+    bool has_samples_;
 
-  std::string frame_;
+    std::string frame_;
 
-  /** ROS2 subscribers */
-  rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr cloud_sub_pc2_;
-  rclcpp::Subscription<gpd_ros::msg::CloudIndexed>::SharedPtr cloud_sub_cloud_indexed_;
-  rclcpp::Subscription<gpd_ros::msg::CloudSamples>::SharedPtr cloud_sub_cloud_samples_;
-  rclcpp::Subscription<gpd_ros::msg::SamplesMsg>::SharedPtr samples_sub_;
+    /** ROS2 subscribers */
+    rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr cloud_sub_pc2_;
+    rclcpp::Subscription<gpd_ros::msg::CloudIndexed>::SharedPtr cloud_sub_cloud_indexed_;
+    rclcpp::Subscription<gpd_ros::msg::CloudSamples>::SharedPtr cloud_sub_cloud_samples_;
+    rclcpp::Subscription<gpd_ros::msg::SamplesMsg>::SharedPtr samples_sub_;
 
-  /** ROS2 publishers */
-  rclcpp::Publisher<gpd_ros::msg::GraspConfigList>::SharedPtr grasps_pub_;
-  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr grasps_rviz_pub_;
+    /** ROS2 publishers */
+    rclcpp::Publisher<gpd_ros::msg::GraspConfigList>::SharedPtr grasps_pub_;
+    rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr grasps_rviz_pub_;
 
-  bool use_importance_sampling_;
-  bool use_rviz_;
+    bool use_importance_sampling_;
+    bool use_rviz_;
 
-  std::vector<double> workspace_;
+    std::vector<double> workspace_;
 
-  /** GPD detector */
-  gpd::GraspDetector* grasp_detector_;
+    /** GPD detector */
+    gpd::GraspDetector* grasp_detector_;
 
-  /** RViz plotter */
-  GraspPlotter* rviz_plotter_;
+    /** RViz plotter */
+    GraspPlotter* rviz_plotter_;
 
-  /** constants for input types */
-  static const int POINT_CLOUD_2;
-  static const int CLOUD_INDEXED;
-  static const int CLOUD_SAMPLES;
+    /** constants for input types */
+    static const int POINT_CLOUD_2;
+    static const int CLOUD_INDEXED;
+    static const int CLOUD_SAMPLES;
 };
 
 #endif
