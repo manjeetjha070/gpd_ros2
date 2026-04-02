@@ -10,9 +10,10 @@ endif()
 
 set(CMAKE_CXX_STANDARD 14)
 
-# -----------------------------
+# ------------------------------------------------------------------------------
 # Find dependencies
-# -----------------------------
+# ------------------------------------------------------------------------------
+
 find_package(ament_cmake REQUIRED)
 
 find_package(rclcpp REQUIRED)
@@ -29,9 +30,28 @@ find_package(tf2_eigen REQUIRED)
 
 find_package(rosidl_default_generators REQUIRED)
 
-# -----------------------------
+# ------------------------------------------------------------------------------
+# External GPD library
+# ------------------------------------------------------------------------------
+
+find_library(GPD_LIB
+  NAMES gpd
+  # PATHS /home/pg/rrs_ss25/manjeet/libs/gpd_install/
+  PATHS /usr/local/lib
+  PATH_SUFFIXES lib
+  NO_DEFAULT_PATH
+)
+
+if(NOT GPD_LIB)
+  message(FATAL_ERROR "Library GPD not found")
+endif()
+set (GPD_INCLUDE_DIRS /home/pg/rrs_ss25/manjeet/libs/gpd_install/include)
+
+
+# ------------------------------------------------------------------------------
 # Custom messages/services
-# -----------------------------
+# ------------------------------------------------------------------------------
+
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/CloudIndexed.msg"
   "msg/CloudSamples.msg"
@@ -45,46 +65,33 @@ rosidl_generate_interfaces(${PROJECT_NAME}
     geometry_msgs
     sensor_msgs
 )
+# Link generated messages
+rosidl_get_typesupport_target(cpp_typesupport_target
+  ${PROJECT_NAME} "rosidl_typesupport_cpp")
 
-# -----------------------------
-# External GPD library
-# -----------------------------
-find_library(GPD_LIB
-  NAMES gpd
-  PATHS /usr/local/lib
-  PATH_SUFFIXES lib
-  NO_DEFAULT_PATH
-)
+# ------------------------------------------------------------------------------
+# grasp_messages
+# ------------------------------------------------------------------------------
 
-if(NOT GPD_LIB)
-  message(FATAL_ERROR "Library GPD not found")
-endif()
-
-# -----------------------------
-# Libraries
-# -----------------------------
 add_library(${PROJECT_NAME}_grasp_messages
   src/grasp_messages.cpp
-)
-
-add_library(${PROJECT_NAME}_grasp_plotter
-  src/grasp_plotter.cpp
 )
 
 # Include dirs for libraries
 target_include_directories(${PROJECT_NAME}_grasp_messages PRIVATE
   include
-  ${PCL_INCLUDE_DIRS}
-  ${OpenCV_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
-)
-
-target_include_directories(${PROJECT_NAME}_grasp_plotter PRIVATE
-  include
+  ${GPD_INCLUDE_DIRS}
+  ${OpenCV_INCLUDE_DIRS}
   ${PCL_INCLUDE_DIRS}
 )
 
-# Dependencies (ROS)
+target_link_libraries(${PROJECT_NAME}_grasp_messages
+  ${cpp_typesupport_target}
+  ${GPD_LIB}
+  ${PCL_LIBRARIES}
+)
+
 ament_target_dependencies(${PROJECT_NAME}_grasp_messages
   rclcpp
   sensor_msgs
@@ -93,59 +100,55 @@ ament_target_dependencies(${PROJECT_NAME}_grasp_messages
   tf2_eigen
 )
 
+
+# ------------------------------------------------------------------------------
+# grasp_plotter
+# ------------------------------------------------------------------------------
+
+add_library(${PROJECT_NAME}_grasp_plotter
+  src/grasp_plotter.cpp
+)
+
+target_include_directories(${PROJECT_NAME}_grasp_plotter PRIVATE
+  include
+  ${PCL_INCLUDE_DIRS}
+  ${GPD_INCLUDE_DIRS}
+)
+
+target_link_libraries(${PROJECT_NAME}_grasp_plotter
+  ${GPD_LIB}
+  ${PCL_LIBRARIES}
+  ${cpp_typesupport_target}
+
+)
+
 ament_target_dependencies(${PROJECT_NAME}_grasp_plotter
   rclcpp
   visualization_msgs
 )
 
-# Link external libs
-target_link_libraries(${PROJECT_NAME}_grasp_messages
-  ${GPD_LIB}
-  ${PCL_LIBRARIES}
-)
-
-target_link_libraries(${PROJECT_NAME}_grasp_plotter
-  ${GPD_LIB}
-  ${PCL_LIBRARIES}
-)
-
-# Link generated messages
-rosidl_get_typesupport_target(cpp_typesupport_target
-  ${PROJECT_NAME} "rosidl_typesupport_cpp")
-
-target_link_libraries(${PROJECT_NAME}_grasp_messages
-  ${cpp_typesupport_target}
-)
-
-target_link_libraries(${PROJECT_NAME}_grasp_plotter
-  ${cpp_typesupport_target}
-)
-
-# -----------------------------
-# Executables
-# -----------------------------
+# ------------------------------------------------------------------------------
+# detect_grasps node
+# ------------------------------------------------------------------------------
 add_executable(detect_grasps
   src/grasp_detection_node.cpp
+  src/main.cpp
 )
 
-add_executable(detect_grasps_server
-  src/grasp_detection_server.cpp
-)
-
-# Include dirs
 target_include_directories(detect_grasps PRIVATE
   include
+  ${GPD_INCLUDE_DIRS}
   ${PCL_INCLUDE_DIRS}
   ${OpenCV_INCLUDE_DIRS}
 )
 
-target_include_directories(detect_grasps_server PRIVATE
-  include
-  ${PCL_INCLUDE_DIRS}
-  ${OpenCV_INCLUDE_DIRS}
+target_link_libraries(detect_grasps
+  ${PROJECT_NAME}_grasp_messages
+  ${PROJECT_NAME}_grasp_plotter
+  ${GPD_LIB}
+  ${PCL_LIBRARIES}
 )
 
-# ROS dependencies
 ament_target_dependencies(detect_grasps
   rclcpp
   sensor_msgs
@@ -154,35 +157,12 @@ ament_target_dependencies(detect_grasps
   pcl_conversions
 )
 
-ament_target_dependencies(detect_grasps_server
-  rclcpp
-  sensor_msgs
-  geometry_msgs
-  std_msgs
-  pcl_conversions
-)
-
-# Link libraries
-target_link_libraries(detect_grasps
-  ${PROJECT_NAME}_grasp_messages
-  ${PROJECT_NAME}_grasp_plotter
-  ${GPD_LIB}
-  ${PCL_LIBRARIES}
-)
-
-target_link_libraries(detect_grasps_server
-  ${PROJECT_NAME}_grasp_messages
-  ${PROJECT_NAME}_grasp_plotter
-  ${GPD_LIB}
-  ${PCL_LIBRARIES}
-)
-
-# -----------------------------
+# ------------------------------------------------------------------------------
 # Install
-# -----------------------------
+# ------------------------------------------------------------------------------
+
 install(TARGETS
   detect_grasps
-  detect_grasps_server
   ${PROJECT_NAME}_grasp_messages
   ${PROJECT_NAME}_grasp_plotter
   DESTINATION lib/${PROJECT_NAME}
@@ -195,15 +175,5 @@ install(DIRECTORY include/
 install(DIRECTORY launch/
   DESTINATION share/${PROJECT_NAME}/launch
 )
-
-# -----------------------------
-# Testing
-# -----------------------------
-if(BUILD_TESTING)
-  find_package(ament_lint_auto REQUIRED)
-  set(ament_cmake_copyright_FOUND TRUE)
-  set(ament_cmake_cpplint_FOUND TRUE)
-  ament_lint_auto_find_test_dependencies()
-endif()
 
 ament_package()
