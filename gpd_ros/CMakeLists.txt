@@ -36,8 +36,8 @@ find_package(rosidl_default_generators REQUIRED)
 
 find_library(GPD_LIB
   NAMES gpd
-  # PATHS /home/pg/rrs_ss25/manjeet/libs/gpd_install/
-  PATHS /usr/local/lib
+  PATHS /home/pg/rrs_ss25/manjeet/libs/gpd_install/
+  #PATHS /usr/local/lib
   PATH_SUFFIXES lib
   NO_DEFAULT_PATH
 )

@@ -96,7 +96,7 @@ visualization_msgs::msg::Marker GraspPlotter::createFingerMarker (
     marker.pose.position.y   = center (1);
     marker.pose.position.z   = center (2);
 
-    marker.lifetime          = rclcpp::Duration::from_seconds (10.0);
+    //marker.lifetime          = rclcpp::Duration::from_seconds (10.0);
 
     // use orientation of hand frame
     Eigen::Quaterniond quat (frame);
@@ -148,7 +148,7 @@ visualization_msgs::msg::Marker GraspPlotter::createHandBaseMarker (
     marker.pose.position.y   = center (1);
     marker.pose.position.z   = center (2);
 
-    marker.lifetime          = rclcpp::Duration::from_seconds (10.0);
+    //marker.lifetime          = rclcpp::Duration::from_seconds (10.0);
 
     Eigen::Quaterniond quat (frame);
 
