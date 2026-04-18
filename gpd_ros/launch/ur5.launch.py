@@ -18,7 +18,7 @@ def generate_launch_description():
                 # RViz topic to publish grasps
                 'rviz_topic': 'plot_grasps',
 
-                'use_sim_time': False
+                'use_sim_time': True
             }]
         )
     ])

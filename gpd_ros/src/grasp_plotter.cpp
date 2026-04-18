@@ -81,8 +81,7 @@ visualization_msgs::msg::Marker GraspPlotter::createFingerMarker (
 {
     visualization_msgs::msg::Marker marker;
 
-    // marker.header.frame_id   = frame_id;
-    marker.header.frame_id   = "camera_link";
+    marker.header.frame_id   = frame_id;
     marker.header.stamp      = clock->now();
     marker.header.stamp.sec -= 1;
 
@@ -133,8 +132,7 @@ visualization_msgs::msg::Marker GraspPlotter::createHandBaseMarker (
 
     visualization_msgs::msg::Marker marker;
 
-    // marker.header.frame_id   = frame_id;
-    marker.header.frame_id   = "camera_link";
+    marker.header.frame_id   = frame_id;
     marker.header.stamp      = clock->now();
     marker.header.stamp.sec -= 1;
 

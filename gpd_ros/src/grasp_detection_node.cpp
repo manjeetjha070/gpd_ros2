@@ -95,7 +95,7 @@ void GraspDetectionNode::detectGrasps()
 {
     if (!has_cloud_ || !cloud_camera_) return;
 
-    cloud_camera_->voxelizeCloud(0.003);
+    // cloud_camera_->voxelizeCloud(0.003);
     // Preprocess
     grasp_detector_->preprocessPointCloud(*cloud_camera_);
 
