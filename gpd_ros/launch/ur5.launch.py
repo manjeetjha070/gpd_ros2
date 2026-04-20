@@ -13,7 +13,8 @@ def generate_launch_description():
                 'cloud_topic': '/camera/depth/color/points',
 
                 # Filepath to the configuration file for GPD
-                'config_file': '/home/pg/rrs_ss25/manjeet/libs/gpd/cfg/ros_eigen_params.cfg',
+                # 'config_file': '/home/pg/rrs_ss25/manjeet/libs/gpd/cfg/ros_eigen_params.cfg',
+                'config_file': '/home/labdoo/gpd/cfg/ros_eigen_params.cfg',
 
                 # RViz topic to publish grasps
                 'rviz_topic': 'plot_grasps',

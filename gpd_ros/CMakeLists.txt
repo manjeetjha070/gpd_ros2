@@ -21,6 +21,7 @@ find_package(sensor_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(visualization_msgs REQUIRED)
+find_package(std_srvs REQUIRED)
 
 find_package(pcl_conversions REQUIRED)
 find_package(PCL REQUIRED)
@@ -59,7 +60,6 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/GraspConfig.msg"
   "msg/GraspConfigList.msg"
   "msg/SamplesMsg.msg"
-  "srv/DetectGrasps.srv"
   DEPENDENCIES
     std_msgs
     geometry_msgs
@@ -155,6 +155,7 @@ ament_target_dependencies(detect_grasps
   geometry_msgs
   std_msgs
   pcl_conversions
+  std_srvs
 )
 
 # ------------------------------------------------------------------------------

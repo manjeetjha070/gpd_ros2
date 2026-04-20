@@ -25,6 +25,11 @@ GraspDetectionNode::GraspDetectionNode()
     // RViz plotter
     rviz_plotter_ = new GraspPlotter(this->get_clock(), rviz_pub_, grasp_detector_->getHandSearchParameters().hand_geometry_);
 
+    //service
+    service_ = this->create_service<std_srvs::srv::Trigger>(
+    "detect_grasps",
+    std::bind(&GraspDetectionNode::serviceCallback, this, std::placeholders::_1, std::placeholders::_2));
+
     RCLCPP_INFO(this->get_logger(), "Node ready. Waiting for cloud...");
 }
 
@@ -51,7 +56,7 @@ GraspDetectionNode::~GraspDetectionNode()
 
 void GraspDetectionNode::cloudCallback(const sensor_msgs::msg::PointCloud2::SharedPtr msg)
 {
-    if (has_cloud_) return;
+    // if (has_cloud_) return;
 
     Eigen::Matrix3Xd view_points(3,1);
     view_points.setZero();
@@ -88,13 +93,27 @@ void GraspDetectionNode::cloudCallback(const sensor_msgs::msg::PointCloud2::Shar
     frame_id_     = msg->header.frame_id;
     has_cloud_    = true;
 
+}
+
+void GraspDetectionNode::serviceCallback(
+    const std::shared_ptr<std_srvs::srv::Trigger::Request> request,
+    std::shared_ptr<std_srvs::srv::Trigger::Response> response)
+{
+    if (!has_cloud_ || !cloud_camera_)
+    {
+        response->success = false;
+        response->message = "No point cloud available.";
+        return;
+    }
+
     detectGrasps();
+
+    response->success = true;
+    response->message = "Grasp detection executed.";
 }
 
 void GraspDetectionNode::detectGrasps()
-{
-    if (!has_cloud_ || !cloud_camera_) return;
-
+{    
     // cloud_camera_->voxelizeCloud(0.003);
     // Preprocess
     grasp_detector_->preprocessPointCloud(*cloud_camera_);
