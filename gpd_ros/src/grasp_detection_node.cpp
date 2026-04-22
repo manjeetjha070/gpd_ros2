@@ -64,7 +64,7 @@ void GraspDetectionNode::cloudCallback(const sensor_msgs::msg::PointCloud2::Shar
     // Reset previous cloud
     if (cloud_camera_)
     {
-        // delete cloud_camera_;
+        delete cloud_camera_;
         cloud_camera_ = nullptr;
     }
 
@@ -114,7 +114,7 @@ void GraspDetectionNode::serviceCallback(
 
 void GraspDetectionNode::detectGrasps()
 {    
-    // cloud_camera_->voxelizeCloud(0.003);
+    cloud_camera_->voxelizeCloud(0.003);
     // Preprocess
     grasp_detector_->preprocessPointCloud(*cloud_camera_);
 
